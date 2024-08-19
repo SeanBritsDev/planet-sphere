@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive 3D Sphere with Image Upload</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background-color: black;
+      }
+      canvas {
+        display: block;
+      }
+      #upload-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        padding: 10px 20px;
+        background-color: white;
+        border: none;
+        cursor: pointer;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="file" id="upload-btn" accept="image/*" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+      // Set up the scene, camera, and renderer
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Create a sphere with default light blue texture
+      const geometry = new THREE.SphereGeometry(5, 32, 32);
+      const defaultMaterial = new THREE.MeshBasicMaterial({ color: 0x87ceeb });
+      const sphere = new THREE.Mesh(geometry, defaultMaterial);
+      scene.add(sphere);
+
+      // Position the camera
+      camera.position.z = 15;
+
+      // Add OrbitControls to allow for rotation
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+      // Function to handle image upload
+      function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const texture = new THREE.TextureLoader().load(e.target.result);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+            sphere.material.map = texture;
+            sphere.material.needsUpdate = true;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
+      // Add event listener for file input
+      document
+        .getElementById("upload-btn")
+        .addEventListener("change", handleImageUpload);
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update(); // Update controls (required when using OrbitControls)
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Handle window resize
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
+</html>
